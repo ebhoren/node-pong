@@ -1,10 +1,10 @@
 (function($){
 
-	var socket = io.connect('http://habs.local:1337');
-	var msgtpl = $('#msgtpl').html();
-	$('#msgtpl').remove();
+	var socket = io.connect('http://192.168.0.187:1337'),
+		game 	= $('#game');
 
 
+	/*
 	$('#loginform').submit(function(event){
 		event.preventDefault();
 		socket.emit('login', {
@@ -14,37 +14,59 @@
 		})
 
 	});
+	*/
 
-	socket.on('logged', function(){
 
-		$("#login").fadeOut();
 
+	function createTank(){ return $('<div class="tank"></div>'); };
+
+
+
+	var myTank;
+
+
+	socket.on('new enemy',function($tank){
+
+		var tank = createTank();
+			tank.attr('id', 'tank-'+$tank.id);
+			tank.css({top: $tank.x, left: $tank.y});
+
+		game.append( tank );
 	});
+	socket.on('doum', function($game){
 
-/*----------- ENVOIE DES MESSAGES -------------*/
+		console.log( $game );
 
-$('#form').submit(function(event){
-	event.preventDefault();
-	socket.emit('newmsg', {message : $('#message').val()});
+		var $enemies 	= $game.enemies,
+			$tank 		= $game.you;
 
-	$('#message').val('');
-	$('#message').focus();
-});
+		var i = 0, n = $enemies.length, obj, enemy;
+		for(; i<n++; i++)
+		{	
+			obj 	= $enemies[i];
+			if( !obj ) continue;
 
-socket.on('newmsg',function(message){
-	$('#messages').append("<div class='message'>" + Mustache.render(msgtpl,message) + "</div>");
-	$('#messages').animate({scrollTop : $('#messages').prop('scrollHeight')}, 50);
-});
+			enemy = createTank();
+			enemy.attr('id', 'tank-'+obj.id);
+			enemy.css({top: obj.x, left: obj.y});
 
+			game.append( enemy );
+		};
 
-/*----------- GESION DES USERS CONNECTÉS -------------*/
+		myTank = createTank();
 
-	socket.on("newusr", function(user){
-		$('#users').append('<img src="' + user.avatar + '" id="' + user.id + '">');
+		myTank.addClass('me')
+		myTank.attr('id', 'tank-'+$tank.id);
+		myTank.css({top: $tank.x, left: $tank.y});
+
+		game.append( myTank );
 	});
+	socket.on('move', function($tank){
 
-	socket.on('disusr',function(user){
-		$('#' + user.id).remove();
+		$('#tank-'+$tank.id).css({top: $tank.x, left: $tank.y});
 	});
+	//socket.on('disconnect', function($id){ $('#tank-'+$id).removeChild(); });
+
+
 
 })(jQuery);
