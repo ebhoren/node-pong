@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Node Pong</title>
+    <link rel="stylesheet" href="/styles/app.css">
+</head>
+<body>
+    
+    <div id="app" class="app"></div>
+
+
+    <!-- Scripts -->
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/bower_components/mousetrap/mousetrap.js"></script>
+    <script src="/bower_components/requestAnimationFrame-polyfill/requestAnimationFrame.js"></script>
+    <script>
+
+        // IO
+        var socket = io.connect(document.location.protocol+'//'+document.location.host);
+
+        // Ready
+        $(function(){
+
+            var app             = window.document.getElementById('app'),
+                myTank          = null,
+                tanks           = {},
+
+                increment       = 50,
+                initialized     = false;
+
+
+                
+            // initialization
+            socket.on('init', function( $data ){
+
+                var myTankData      = $data.tank,
+                    enemiesData     = $data.enemies,
+                    fragment        = document.createDocumentFragment();
+
+
+                // create your tank
+                myTank = _createTank( myTankData );
+                myTank.el.classList.add('me');
+
+                tanks[ myTankData.id ] = myTank;
+
+
+                // create all enemies
+                var i = 0, n = enemiesData.length, enemy;
+                for(; i<n; i++)
+                {
+                    enemy = _createTank( enemiesData[i] );
+
+                    tanks[ enemiesData[i].id ] = enemy;
+                    fragment.appendChild( enemy.el );
+                };
+
+
+                // append to DOM
+                fragment.appendChild( myTank.el );
+                app.appendChild( fragment );
+
+                // game is initialized
+                initialized = true;
+
+
+                // keyboard input
+                Mousetrap.bind('up', function(){ _moveMyTank( 0, -increment ); });
+                Mousetrap.bind('left', function(){ _moveMyTank( -increment, 0 ); });
+                Mousetrap.bind('down', function(){ _moveMyTank( 0, increment ); });
+                Mousetrap.bind('right', function(){ _moveMyTank( increment, 0 ); });
+            });
+
+
+
+            // joining/leaving the warzone
+            socket.on('joined', function( $data ){
+
+                var tank = _createTank( $data );
+
+                tanks[ $data.id ] = tank;
+                app.appendChild( tank.el );
+            });
+            socket.on('leaved', function( $data ){
+
+                var id, tank;
+                for( id in tanks )
+                {
+                    tank = tanks[ id ];
+                    if( tank.data.id != $data.id ) continue;
+
+                    app.removeChild( tank.el );
+
+                    tank = null;
+                    tanks[ id ] = null;
+                    delete tanks[ id ];
+
+                    break;
+                };
+            });
+
+            // movement
+            socket.on('moved', function( $data ){
+
+                if( initialized === false ) return;
+
+                var tank = tanks[ $data.id ];
+                if( !tank ) return;
+
+                tank.data.x = $data.x;
+                tank.data.y = $data.y;
+
+                _moveTank( tank );
+            });
+
+
+
+
+            // utils
+            function _createTank( $data ){
+
+                var el      = document.createElement('div'),
+                    tank    = {el: el, data: $data};
+
+                el.attributes.id = 'tank-' + $data.id;
+                el.classList.add('tank');
+
+                _moveTank( tank );
+                return tank;
+            };
+            function _moveTank( $tank ){
+
+                $tank.el.style.top  = $tank.data.y + 'px';
+                $tank.el.style.left = $tank.data.x + 'px';
+            };
+            function _moveMyTank( $x, $y ){
+
+                myTank.data.x += $x;
+                myTank.data.y += $y;
+
+                if( myTank.data.y < 0 ) myTank.data.y = 0;
+                else if( myTank.data.y > 500 ) myTank.data.y = 500;
+
+                if( myTank.data.x < 0 ) myTank.data.x = 0;
+                else if( myTank.data.x > 500 ) myTank.data.x = 500;
+
+                socket.emit('moved', myTank.data);
+            };
+
+        });
+
+    </script>
+</body>
+</html>

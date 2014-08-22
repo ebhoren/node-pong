@@ -1,0 +1,34 @@
+@import (once) '../../public/bower_components/lesshat/build/lesshat.less';
+@import (once) '../../public/bower_components/normalize-less/normalize.less';
+
+
+
+
+html, body {
+	margin: 0;
+	padding: 0;
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+}
+
+
+.app {
+	width: 550px;
+	height: 550px;
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	margin: -275px 0 0 -275px;
+	background-color: green;
+}
+
+
+.tank {
+	position: absolute;
+	width: 50px;
+	height: 50px;
+	background-color: black;
+
+	&.me { background-color: red; }
+}

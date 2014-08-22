@@ -6,16 +6,8 @@ module.exports = (grunt) ->
 
     # config
     config:
-      server: 'http://crosby.local'
-      port: 8017
-
-
-    # work
-    clean: 
-        dist: '<%= config.dist %>' 
-        tmp: '<%= config.tmp %>'
-        front: '<%= config.views %>/front.prod.php'
-        prelaunch: '<%= config.views %>/prelaunch.prod.php'
+      server: 'http://localhost'
+      port: 8000
 
     open:
       server:
@@ -26,21 +18,49 @@ module.exports = (grunt) ->
             files: ['Gruntfile.coffee']
             options:
               reload: true
+        server:
+            files: ['app.js']
+            tasks: ['develop']
+            options: 
+                nospawn: true
         scripts:
-            files: ['<%= config.app %>/scripts/{,*/}*.js']
+            files: ['src/scripts/{,*/}*.js']
             tasks: ['browserify']
+        styles: 
+            files: ['src/styles/{,*/}*.less']
+            tasks: ['less:dev']
+
+    develop:
+      server:
+        file: 'app.js'
+        nodeArgs: ['--debug']
 
 
 
-  # start working environment
-  grunt.registerTask 'work', ['build', 'open:server', 'watch']
+    # scripts
+    browserify:
+        game:
+            src: 'src/scripts/game.js'
+            dest: 'public/scripts/game.js'
 
-  # prep images assets (responsive images, spritesheets)
-  grunt.registerTask 'images', ['responsive_images', 'sprite', 'copy:gifLoader']
 
-  # prep site for production (minify js/css) 
-  grunt.registerTask 'build', ['clean', 'images', 'browserify', 'less:dev']
-  grunt.registerTask 'release', ['build', 'copy:view', 'pngmin', 'imagemin', 'less:prod', 'useminPrepare', 'concat', 'copy:jsLibs', 'uglify', 'cssmin', 'rev', 'usemin', 'clean:tmp']
-  
+
+    # styles
+    less:
+        dev: 
+            options: 
+                ieCompat: false
+            files: 
+                'public/styles/app.css': 'src/styles/app.less'
+        prod:
+            options:
+                ieCompat: false
+                report: 'gzip'
+            files: 
+                'public/styles/app.css': 'src/styles/app.less'
+
+
   # start working
-  grunt.registerTask 'default', ['release']
+  grunt.registerTask 'work', ['develop', 'watch']
+  grunt.registerTask 'build', ['browserify', 'less:prod']
+  grunt.registerTask 'default', ['work']

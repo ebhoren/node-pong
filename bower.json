@@ -1,0 +1,24 @@
+{
+  "name": "node-pong",
+  "main": "app.js",
+  "version": "0.0.0",
+  "moduleType": [
+    "node"
+  ],
+  "license": "MIT",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {},
+  "devDependencies": {
+    "lesshat": "~3.0.2",
+    "normalize-less": "*",
+    "requestAnimationFrame-polyfill": "*",
+    "mousetrap": "~1.4.6"
+  }
+}
